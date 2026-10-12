@@ -1,0 +1,6 @@
+{
+  "name": "Cash Bet | ካሽ ቤት",
+  "description": "Premier sports betting and crash gaming platform with live odds, Telebirr integration, and instant betslip management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
