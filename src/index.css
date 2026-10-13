@@ -16,6 +16,11 @@
   100% { background-color: transparent; }
 }
 
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.9; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+
 .flash-up {
   animation: flashGreen 1.5s ease-out;
 }
@@ -24,18 +29,61 @@
   animation: flashRed 1.5s ease-out;
 }
 
-/* Custom Sportsbook Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* Ethiopian Flag & Birr Banknote Signature Lines */
+.ethiopia-tricolor-line {
+  background: linear-gradient(90deg, #009B48 0%, #009B48 33.3%, #FED100 33.3%, #FED100 66.6%, #E4002B 66.6%, #E4002B 100%);
 }
-::-webkit-scrollbar-track {
-  background: #090d16;
+
+.ethiopia-gradient-glow {
+  box-shadow: 0 0 25px -5px rgba(0, 155, 72, 0.25), 0 0 25px -5px rgba(254, 209, 0, 0.2), 0 0 25px -5px rgba(228, 0, 43, 0.15);
 }
-::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 3px;
+
+.ethiopia-border-tricolor {
+  border-image: linear-gradient(90deg, #009B48, #FED100, #E4002B) 1;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+
+/* Ethiopian Birr Banknote Themes (የኢትዮጵያ ብሮች ከለር ኮምቢኔሽን) */
+/* 100 Birr: Teal / Emerald */
+.birr-100-gradient {
+  background: linear-gradient(135deg, rgba(6, 78, 59, 0.95) 0%, rgba(13, 148, 136, 0.85) 60%, rgba(16, 185, 129, 0.4) 100%);
+}
+.birr-100-border {
+  border-color: rgba(20, 184, 166, 0.45);
+}
+
+/* 50 Birr: Radiant Golden Amber */
+.birr-50-gradient {
+  background: linear-gradient(135deg, rgba(120, 53, 15, 0.95) 0%, rgba(217, 119, 6, 0.85) 60%, rgba(245, 158, 11, 0.4) 100%);
+}
+.birr-50-border {
+  border-color: rgba(245, 158, 11, 0.45);
+}
+
+/* 200 Birr: Royal Violet-Indigo */
+.birr-200-gradient {
+  background: linear-gradient(135deg, rgba(59, 7, 100, 0.95) 0%, rgba(109, 40, 217, 0.85) 60%, rgba(139, 92, 246, 0.4) 100%);
+}
+.birr-200-border {
+  border-color: rgba(139, 92, 246, 0.45);
+}
+
+/* 10 Birr: Fresh Leaf Green */
+.birr-10-gradient {
+  background: linear-gradient(135deg, rgba(20, 83, 45, 0.95) 0%, rgba(22, 163, 74, 0.85) 60%, rgba(34, 197, 94, 0.4) 100%);
+}
+
+/* Telebirr & CBE Birr Signature Colors */
+.telebirr-cyan-gradient {
+  background: linear-gradient(135deg, rgba(8, 47, 73, 0.95) 0%, rgba(2, 132, 199, 0.85) 60%, rgba(56, 189, 248, 0.4) 100%);
+}
+
+.cbe-purple-gradient {
+  background: linear-gradient(135deg, rgba(46, 16, 101, 0.95) 0%, rgba(88, 28, 135, 0.85) 60%, rgba(217, 119, 6, 0.4) 100%);
+}
+
+/* Banknote Guilloche Pattern Overlay */
+.ethiopia-banknote-pattern {
+  background-image: radial-gradient(rgba(16, 185, 129, 0.08) 1px, transparent 0), radial-gradient(rgba(245, 158, 11, 0.06) 1px, transparent 0);
+  background-position: 0 0, 15px 15px;
+  background-size: 30px 30px;
 }

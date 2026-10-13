@@ -11,7 +11,9 @@ import {
   DollarSign, 
   ShieldAlert,
   ChevronDown,
-  X
+  X,
+  Printer,
+  Eye
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { BetSelection, Currency, Language, PlacedBet } from '../types/betting';
@@ -54,6 +56,7 @@ export const BetSlip: React.FC<BetSlipProps> = ({
   const [showCodeInput, setShowCodeInput] = useState(false);
   const [lastPlacedBet, setLastPlacedBet] = useState<PlacedBet | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [viewingTicket, setViewingTicket] = useState<PlacedBet | null>(null);
 
   // Quick Stake options
   const quickStakes = currency === 'ETB' ? [50, 100, 250, 500, 1000] : [5, 10, 25, 50, 100];
@@ -267,13 +270,23 @@ export const BetSlip: React.FC<BetSlipProps> = ({
               <div className="bg-slate-950/80 p-2 rounded-lg flex items-center justify-between text-xs font-mono">
                 <span className="text-slate-400">{t(language, 'bookingCode')}:</span>
                 <span className="text-amber-400 font-bold">{lastPlacedBet.code}</span>
-                <button
-                  onClick={() => copyBookingCode(lastPlacedBet.code)}
-                  className="text-emerald-400 hover:text-white"
-                  title="Copy Code"
-                >
-                  {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => copyBookingCode(lastPlacedBet.code)}
+                    className="text-emerald-400 hover:text-white p-1"
+                    title="Copy Code"
+                  >
+                    {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                  <button
+                    onClick={() => setViewingTicket(lastPlacedBet)}
+                    className="text-amber-400 hover:text-amber-300 p-1 flex items-center gap-1 font-sans text-[11px] font-bold"
+                    title="View Ticket"
+                  >
+                    <ReceiptText className="w-3.5 h-3.5" />
+                    <span>ቲኬት እይ</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -463,9 +476,15 @@ export const BetSlip: React.FC<BetSlipProps> = ({
                     <span className="text-slate-500">Stake: </span>
                     <span className="text-white font-bold">{bet.currency} {bet.stake}</span>
                   </div>
-                  <div>
-                    <span className="text-slate-500">To Return: </span>
+                  <div className="flex items-center gap-2">
                     <span className="text-emerald-400 font-bold">{bet.currency} {bet.potentialPayout}</span>
+                    <button
+                      onClick={() => setViewingTicket(bet)}
+                      className="text-amber-400 hover:text-white p-1 rounded bg-slate-900 border border-slate-800"
+                      title="View Official Ticket"
+                    >
+                      <Eye className="w-3 h-3" />
+                    </button>
                   </div>
                 </div>
 
@@ -503,6 +522,117 @@ export const BetSlip: React.FC<BetSlipProps> = ({
         <div className="fixed inset-0 z-50 lg:hidden flex flex-col justify-end bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
           <div className="h-[85vh] w-full p-2">
             {content}
+          </div>
+        </div>
+      )}
+
+      {/* Official Ethiopian Printable Betting Ticket Modal */}
+      {viewingTicket && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white text-slate-900 border border-slate-300 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl flex flex-col font-mono text-xs">
+            {/* Ticket Header */}
+            <div className="bg-slate-950 text-white p-4 text-center space-y-1">
+              <div className="text-[10px] uppercase tracking-widest text-emerald-400 font-bold">
+                NATIONAL LOTTERY ADMINISTRATION (NLA) LICENSED
+              </div>
+              <h2 className="text-xl font-black tracking-wider text-white">
+                CASH<span className="text-emerald-400">BET</span> ETHIOPIA
+              </h2>
+              <div className="text-[10px] text-slate-400 font-sans">
+                የኢትዮጵያ ህጋዊ የስፖርት ውርርድ ደረሰኝ
+              </div>
+            </div>
+
+            {/* Ticket Content */}
+            <div className="p-4 space-y-3 bg-slate-50 text-slate-900 max-h-[60vh] overflow-y-auto">
+              <div className="flex justify-between border-b border-dashed border-slate-400 pb-2">
+                <div>
+                  <div className="text-[10px] text-slate-500">TICKET NUMBER:</div>
+                  <div className="font-black text-sm text-slate-950">{viewingTicket.code}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] text-slate-500">DATE & TIME:</div>
+                  <div className="font-bold">{viewingTicket.date}</div>
+                </div>
+              </div>
+
+              {/* Status Stamp */}
+              <div className="text-center py-1">
+                <span className={`px-3 py-0.5 rounded font-black text-xs ${
+                  viewingTicket.status === 'won'
+                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-400'
+                    : viewingTicket.status === 'cashed_out'
+                    ? 'bg-blue-100 text-blue-800 border border-blue-400'
+                    : 'bg-amber-100 text-amber-900 border border-amber-400'
+                }`}>
+                  ● {viewingTicket.status.toUpperCase()}
+                </span>
+              </div>
+
+              {/* Match Selections */}
+              <div className="space-y-2 border-y border-dashed border-slate-400 py-2.5">
+                {viewingTicket.selections.map((sel, sIdx) => (
+                  <div key={sIdx} className="space-y-0.5 text-[11px]">
+                    <div className="font-bold text-slate-950">{sel.matchTitle}</div>
+                    <div className="flex justify-between text-slate-700">
+                      <span>{sel.marketName}: <strong>{sel.selectionName}</strong></span>
+                      <span className="font-black">@{sel.odd.toFixed(2)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Calculation Breakdown */}
+              <div className="space-y-1 pt-1 text-[11px]">
+                <div className="flex justify-between text-slate-600">
+                  <span>TOTAL ODDS:</span>
+                  <span className="font-bold text-slate-900">{viewingTicket.totalOdds.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-slate-600">
+                  <span>STAKE AMOUNT:</span>
+                  <span className="font-bold text-slate-900">{viewingTicket.currency} {viewingTicket.stake.toFixed(2)}</span>
+                </div>
+                {viewingTicket.bonusMultiplier > 1 && (
+                  <div className="flex justify-between text-emerald-700 font-bold">
+                    <span>ACCUMULATOR BONUS:</span>
+                    <span>+{Math.round((viewingTicket.bonusMultiplier - 1) * 100)}%</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-sm font-black text-slate-950 pt-2 border-t border-slate-300">
+                  <span>GROSS RETURN:</span>
+                  <span className="text-emerald-700 font-mono">
+                    {viewingTicket.currency} {viewingTicket.potentialPayout.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Barcode Graphic */}
+              <div className="text-center pt-2">
+                <div className="tracking-[6px] text-lg font-mono text-slate-800">
+                  ||||| ||| |||| || |||||| ||| ||
+                </div>
+                <div className="text-[9px] text-slate-500 mt-0.5">
+                  SCAN TO VERIFY AT ANY CASH BET AGENT
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="p-3 bg-slate-200 border-t border-slate-300 flex items-center justify-between gap-2">
+              <button
+                onClick={() => window.print()}
+                className="flex-1 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg flex items-center justify-center gap-1.5 text-xs cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>{language === 'am' ? 'ቲኬት አትም' : 'Print Slip'}</span>
+              </button>
+              <button
+                onClick={() => setViewingTicket(null)}
+                className="px-4 py-2 bg-slate-300 hover:bg-slate-400 text-slate-900 font-bold rounded-lg text-xs cursor-pointer"
+              >
+                {language === 'am' ? 'ዝጋ' : 'Close'}
+              </button>
+            </div>
           </div>
         </div>
       )}

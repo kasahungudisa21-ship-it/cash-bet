@@ -10,6 +10,12 @@ import { VirtualLeague } from './components/VirtualLeague';
 import { MegaJackpot } from './components/MegaJackpot';
 import { WalletModal } from './components/WalletModal';
 import { TicketCheckModal } from './components/TicketCheckModal';
+import { AuthModal } from './components/AuthModal';
+import { EthiopianBirrDashboardHeader, DashboardLayoutMode } from './components/EthiopianBirrDashboardHeader';
+import { FinancialDashboardView } from './components/FinancialDashboardView';
+import { ArcadeDashboardView } from './components/ArcadeDashboardView';
+import { LiveStadiumDashboardView } from './components/LiveStadiumDashboardView';
+import { getCurrentUser, saveCurrentUser, signOutUser, UserProfile } from './utils/auth';
 import { 
   BetSelection, 
   Currency, 
@@ -34,8 +40,12 @@ export default function App() {
   const [currency, setCurrency] = useState<Currency>('ETB');
   const [soundEnabled, setSoundEnabled] = useState(true);
 
-  // User State
+  // User State & Auth
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => getCurrentUser());
+
   const [balance, setBalance] = useState<number>(() => {
+    const user = getCurrentUser();
+    if (user) return user.balance;
     const saved = localStorage.getItem('cashbet_balance');
     return saved ? Number(saved) : 2500;
   });
@@ -56,6 +66,7 @@ export default function App() {
   const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeNavTab, setActiveNavTab] = useState<string>('sports');
+  const [dashboardLayoutMode, setDashboardLayoutMode] = useState<DashboardLayoutMode>('sports');
 
   // Bet Slip State
   const [selections, setSelections] = useState<BetSelection[]>([]);
@@ -66,6 +77,17 @@ export default function App() {
   const [walletModalOpen, setWalletModalOpen] = useState(false);
   const [walletInitialTab, setWalletInitialTab] = useState<'deposit' | 'withdraw'>('deposit');
   const [ticketCheckOpen, setTicketCheckOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  // Sync balance to currentUser
+  const updateBalanceState = (newBal: number) => {
+    setBalance(newBal);
+    if (currentUser) {
+      const updated = { ...currentUser, balance: newBal };
+      setCurrentUser(updated);
+      saveCurrentUser(updated);
+    }
+  };
 
   // Save state to localStorage
   useEffect(() => {
@@ -176,7 +198,7 @@ export default function App() {
   const handlePlaceBet = (newBet: PlacedBet): boolean => {
     if (balance < newBet.stake) return false;
 
-    setBalance((prev) => prev - newBet.stake);
+    updateBalanceState(balance - newBet.stake);
     setActiveBets((prev) => [newBet, ...prev]);
 
     // Record transaction
@@ -200,7 +222,7 @@ export default function App() {
     setActiveBets((prev) =>
       prev.map((b) => (b.id === betId ? { ...b, status: 'cashed_out', cashoutOffer: 0 } : b))
     );
-    setBalance((prev) => prev + cashoutAmount);
+    updateBalanceState(balance + cashoutAmount);
 
     const newTx: Transaction = {
       id: 'tx-' + Date.now(),
@@ -217,7 +239,7 @@ export default function App() {
 
   // Deposit
   const handleDeposit = (amount: number, method: 'Telebirr' | 'CBE Birr' | 'Chapa' | 'Card') => {
-    setBalance((prev) => prev + amount);
+    updateBalanceState(balance + amount);
     const newTx: Transaction = {
       id: 'tx-' + Date.now(),
       type: 'deposit',
@@ -226,7 +248,7 @@ export default function App() {
       method,
       date: 'Today ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       status: 'completed',
-      reference: (method === 'Telebirr' ? 'TB-' : 'CBE-') + Math.floor(10000000 + Math.random() * 90000000),
+      reference: (method === 'Telebirr' ? 'TB-' : method === 'CBE Birr' ? 'CBE-' : 'CHP-') + Math.floor(10000000 + Math.random() * 90000000),
     };
     setTransactions((prev) => [newTx, ...prev]);
   };
@@ -234,7 +256,7 @@ export default function App() {
   // Withdrawal
   const handleWithdraw = (amount: number, method: 'Telebirr' | 'CBE Birr'): boolean => {
     if (balance < amount) return false;
-    setBalance((prev) => prev - amount);
+    updateBalanceState(balance - amount);
     const newTx: Transaction = {
       id: 'tx-' + Date.now(),
       type: 'withdrawal',
@@ -306,7 +328,7 @@ export default function App() {
   // Update balance from Crash Rush
   const handleUpdateCrashBalance = (amt: number, type: 'win' | 'loss', desc: string) => {
     if (type === 'win') {
-      setBalance((prev) => prev + amt);
+      updateBalanceState(balance + amt);
       const newTx: Transaction = {
         id: 'tx-' + Date.now(),
         type: 'bet_win',
@@ -319,7 +341,7 @@ export default function App() {
       };
       setTransactions((prev) => [newTx, ...prev]);
     } else {
-      setBalance((prev) => Math.max(0, prev - amt));
+      updateBalanceState(Math.max(0, balance - amt));
       const newTx: Transaction = {
         id: 'tx-' + Date.now(),
         type: 'bet_placed',
@@ -381,152 +403,317 @@ export default function App() {
         setActiveNavTab={setActiveNavTab}
         openSlipMobile={() => setMobileSlipOpen(true)}
         slipCount={selections.length}
+        currentUser={currentUser}
+        openAuthModal={() => setAuthModalOpen(true)}
+        onSignOut={() => {
+          signOutUser();
+          setCurrentUser(null);
+        }}
       />
 
       {/* Main Content Layout */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 flex flex-col lg:flex-row gap-5">
-        {/* Left Sidebar (Sports Categories & Leagues) */}
-        <SportsSidebar
+      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 space-y-5">
+        {/* Ethiopian Birr Banknotes KPI & Layout Switcher Header */}
+        <EthiopianBirrDashboardHeader
           language={language}
-          selectedSport={selectedSport}
-          setSelectedSport={setSelectedSport}
-          selectedLeague={selectedLeague}
-          setSelectedLeague={setSelectedLeague}
-          liveMatchesCount={liveMatches.length}
+          currency={currency}
+          balance={balance}
+          activeBetsCount={activeBets.filter((b) => b.status === 'active').length}
+          potentialPayoutTotal={activeBets
+            .filter((b) => b.status === 'active')
+            .reduce((sum, b) => sum + b.potentialPayout, 0)}
+          hotMatch={matches.find((m) => m.id === 'eth-101') || matches.find((m) => m.status === 'live')}
+          activeLayoutMode={dashboardLayoutMode}
+          setLayoutMode={(mode) => {
+            setDashboardLayoutMode(mode);
+            if (mode === 'sports') setActiveNavTab('sports');
+            else if (mode === 'stadium') setActiveNavTab('live');
+            else if (mode === 'arcade') setActiveNavTab('crash');
+            else if (mode === 'financial') setActiveNavTab('sports');
+          }}
           openWallet={(tab) => {
             setWalletInitialTab(tab);
             setWalletModalOpen(true);
           }}
+          onSelectOdd={handleSelectOdd}
+          selectedOddIds={selectedOddIds}
         />
 
-        {/* Center Main Stage */}
-        <div className="flex-1 min-w-0 space-y-5">
-          {/* View: Aviator / Crash Mini-Game */}
-          {activeNavTab === 'crash' && (
-            <CashRushGame
+        {/* Dynamic Layout Mode Rendering */}
+        {dashboardLayoutMode === 'financial' && (
+          <FinancialDashboardView
+            language={language}
+            currency={currency}
+            balance={balance}
+            transactions={transactions}
+            openWalletModal={(tab) => {
+              setWalletInitialTab(tab);
+              setWalletModalOpen(true);
+            }}
+            onQuickDeposit={(amount, method) => {
+              handleDeposit(amount, method);
+            }}
+          />
+        )}
+
+        {dashboardLayoutMode === 'arcade' && (
+          <div className="flex flex-col lg:flex-row gap-5">
+            <div className="flex-1 min-w-0">
+              <ArcadeDashboardView
+                language={language}
+                currency={currency}
+                balance={balance}
+                onUpdateCrashBalance={handleUpdateCrashBalance}
+                onPlaceJackpot={handlePlaceJackpot}
+                selectedOddIds={selections.map((s) => s.matchId)}
+                onSelectOdd={handleSelectOdd}
+              />
+            </div>
+
+            {/* Bet Slip Sidebar */}
+            <BetSlip
+              selections={selections}
+              onRemoveSelection={handleRemoveSelection}
+              onClearSlip={handleClearSlip}
               balance={balance}
-              onUpdateBalance={handleUpdateCrashBalance}
               currency={currency}
               language={language}
+              onPlaceBet={handlePlaceBet}
+              activeBets={activeBets}
+              onCashOut={handleCashOut}
+              isOpenMobile={mobileSlipOpen}
+              onCloseMobile={() => setMobileSlipOpen(false)}
+              onLoadBookingCode={handleLoadBookingCode}
             />
-          )}
+          </div>
+        )}
 
-          {/* View: Virtual League */}
-          {activeNavTab === 'virtual' && (
-            <VirtualLeague
-              language={language}
-              currency={currency}
-              selectedOddIds={selections.map((s) => s.matchId)}
-              onSelectOdd={handleSelectOdd}
-            />
-          )}
+        {dashboardLayoutMode === 'stadium' && (
+          <div className="flex flex-col lg:flex-row gap-5">
+            <div className="flex-1 min-w-0">
+              <LiveStadiumDashboardView
+                liveMatches={liveMatches}
+                language={language}
+                selectedOddIds={selections.map((s) => s.matchId)}
+                onSelectOdd={handleSelectOdd}
+                onOpenDetails={(m) => setSelectedMatchForDetail(m)}
+              />
+            </div>
 
-          {/* View: Mega Jackpot */}
-          {activeNavTab === 'jackpot' && (
-            <MegaJackpot
-              language={language}
-              currency={currency}
+            {/* Bet Slip Sidebar */}
+            <BetSlip
+              selections={selections}
+              onRemoveSelection={handleRemoveSelection}
+              onClearSlip={handleClearSlip}
               balance={balance}
-              onPlaceJackpot={handlePlaceJackpot}
+              currency={currency}
+              language={language}
+              onPlaceBet={handlePlaceBet}
+              activeBets={activeBets}
+              onCashOut={handleCashOut}
+              isOpenMobile={mobileSlipOpen}
+              onCloseMobile={() => setMobileSlipOpen(false)}
+              onLoadBookingCode={handleLoadBookingCode}
             />
-          )}
+          </div>
+        )}
 
-          {/* View: Sportsbook & Live Betting */}
-          {(activeNavTab === 'sports' || activeNavTab === 'live') && (
-            <>
-              {/* Live Match Tracker (Sheger Derby & Live games) */}
-              {liveMatches.length > 0 && (
-                <LivePitchTracker
-                  liveMatches={liveMatches}
+        {dashboardLayoutMode === 'sports' && (
+          <div className="flex flex-col lg:flex-row gap-5">
+            {/* Left Sidebar (Sports Categories & Leagues) */}
+            <SportsSidebar
+              language={language}
+              selectedSport={selectedSport}
+              setSelectedSport={setSelectedSport}
+              selectedLeague={selectedLeague}
+              setSelectedLeague={setSelectedLeague}
+              liveMatchesCount={liveMatches.length}
+              openWallet={(tab) => {
+                setWalletInitialTab(tab);
+                setWalletModalOpen(true);
+              }}
+            />
+
+            {/* Center Main Stage */}
+            <div className="flex-1 min-w-0 space-y-5">
+              {/* Ethiopian Premier League Super Banner */}
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-950 via-slate-900 to-amber-950 border border-emerald-500/40 p-4 text-white shadow-xl">
+                <div className="ethiopia-tricolor-line h-1 absolute top-0 left-0 right-0" />
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-1">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                        <span>🇪🇹</span>
+                        <span>{language === 'am' ? 'የኢትዮጵያ ፕሪሚየር ሊግ ልዩ ኦድስ' : 'Ethiopian Premier League'}</span>
+                      </span>
+                      <span className="text-[11px] font-mono text-amber-400 font-bold bg-amber-500/20 px-2 py-0.5 rounded-full">
+                        +25% BOOST
+                      </span>
+                    </div>
+                    <h3 className="text-base sm:text-lg font-black text-white">
+                      {language === 'am' ? 'ቅዱስ ጊዮርጊስ vs ኢትዮጵያ ቡና (የሸገር ደርቢ)' : 'Saint George vs Ethiopia Bunna (Sheger Derby)'}
+                    </h3>
+                    <p className="text-xs text-slate-300">
+                      {language === 'am'
+                        ? 'በቴሌብር ወይም በሲቢኢ ብር ፈጣን ተቀማጭ ያድርጉና በከፍተኛ ኦድስ ይወራረዱ'
+                        : 'Deposit instantly via Telebirr or CBE Birr and wager with enhanced odds'}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => {
+                        setSelectedSport('ethiopian');
+                        setSelectedLeague('Ethiopian Premier League');
+                        sounds.playClick();
+                      }}
+                      className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs transition-all cursor-pointer shadow-md"
+                    >
+                      {language === 'am' ? 'ደርቢውን ይወራረዱ' : 'Bet Derby'}
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setWalletInitialTab('deposit');
+                        setWalletModalOpen(true);
+                        sounds.playClick();
+                      }}
+                      className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 font-bold text-xs transition-all cursor-pointer"
+                    >
+                      {language === 'am' ? 'ፈጣን ተቀማጭ' : 'Quick Deposit'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* View: Aviator / Crash Mini-Game if activeNavTab was specifically picked */}
+              {activeNavTab === 'crash' && (
+                <CashRushGame
+                  balance={balance}
+                  onUpdateBalance={handleUpdateCrashBalance}
+                  currency={currency}
                   language={language}
-                  onSelectOdd={handleSelectOdd}
-                  selectedOddIds={selections.map((s) => s.matchId)}
                 />
               )}
 
-              {/* Section Header */}
-              <div className="flex items-center justify-between pb-1 border-b border-slate-800">
-                <div className="flex items-center gap-2">
-                  <Flame className="w-5 h-5 text-amber-400" />
-                  <h2 className="text-base font-extrabold text-white flex items-center gap-2">
-                    <span>
-                      {selectedSport === 'ethiopian'
-                        ? (language === 'am' ? 'የኢትዮጵያ ፕሪሚየር ሊግ ጨዋታዎች' : 'Ethiopian Premier League')
-                        : selectedLeague
-                        ? selectedLeague
-                        : selectedSport !== 'all'
-                        ? t(language, selectedSport)
-                        : t(language, activeNavTab === 'live' ? 'live' : 'sports')}
-                    </span>
-                    <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono font-bold">
-                      {filteredMatches.length}
-                    </span>
-                  </h2>
-                </div>
+              {/* View: Virtual League */}
+              {activeNavTab === 'virtual' && (
+                <VirtualLeague
+                  language={language}
+                  currency={currency}
+                  selectedOddIds={selections.map((s) => s.matchId)}
+                  onSelectOdd={handleSelectOdd}
+                />
+              )}
 
-                {/* Reset filter shortcut if filtered */}
-                {(selectedSport !== 'all' || selectedLeague) && (
-                  <button
-                    onClick={() => {
-                      setSelectedSport('all');
-                      setSelectedLeague(null);
-                      sounds.playClick();
-                    }}
-                    className="text-xs text-amber-400 hover:text-amber-300 font-semibold cursor-pointer"
-                  >
-                    {language === 'am' ? 'ሁሉንም አሳይ' : 'Clear Filters'}
-                  </button>
-                )}
-              </div>
+              {/* View: Mega Jackpot */}
+              {activeNavTab === 'jackpot' && (
+                <MegaJackpot
+                  language={language}
+                  currency={currency}
+                  balance={balance}
+                  onPlaceJackpot={handlePlaceJackpot}
+                />
+              )}
 
-              {/* Matches List */}
-              <div className="space-y-3">
-                {filteredMatches.length === 0 ? (
-                  <div className="bg-slate-900/60 rounded-2xl border border-slate-800 p-8 text-center text-slate-400">
-                    <p className="text-sm font-semibold">No matches found for your filter.</p>
-                    <button
-                      onClick={() => {
-                        setSelectedSport('all');
-                        setSelectedLeague(null);
-                        setSearchQuery('');
-                      }}
-                      className="mt-3 px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-lg text-xs font-bold"
-                    >
-                      Reset All Filters
-                    </button>
-                  </div>
-                ) : (
-                  filteredMatches.map((match) => (
-                    <MatchCard
-                      key={match.id}
-                      match={match}
+              {/* View: Sportsbook Matches Feed */}
+              {(activeNavTab === 'sports' || activeNavTab === 'live') && (
+                <>
+                  {/* Live Match Tracker (Sheger Derby & Live games) */}
+                  {liveMatches.length > 0 && (
+                    <LivePitchTracker
+                      liveMatches={liveMatches}
                       language={language}
-                      selectedOddIds={selections.map((s) => s.matchId)}
                       onSelectOdd={handleSelectOdd}
-                      onOpenDetails={(m) => setSelectedMatchForDetail(m)}
+                      selectedOddIds={selections.map((s) => s.matchId)}
                     />
-                  ))
-                )}
-              </div>
-            </>
-          )}
-        </div>
+                  )}
 
-        {/* Right Sidebar: Bet Slip */}
-        <BetSlip
-          selections={selections}
-          onRemoveSelection={handleRemoveSelection}
-          onClearSlip={handleClearSlip}
-          balance={balance}
-          currency={currency}
-          language={language}
-          onPlaceBet={handlePlaceBet}
-          activeBets={activeBets}
-          onCashOut={handleCashOut}
-          isOpenMobile={mobileSlipOpen}
-          onCloseMobile={() => setMobileSlipOpen(false)}
-          onLoadBookingCode={handleLoadBookingCode}
-        />
+                  {/* Section Header */}
+                  <div className="flex items-center justify-between pb-1 border-b border-slate-800">
+                    <div className="flex items-center gap-2">
+                      <Flame className="w-5 h-5 text-amber-400" />
+                      <h2 className="text-base font-extrabold text-white flex items-center gap-2">
+                        <span>
+                          {selectedSport === 'ethiopian'
+                            ? (language === 'am' ? 'የኢትዮጵያ ፕሪሚየር ሊግ ጨዋታዎች' : 'Ethiopian Premier League')
+                            : selectedLeague
+                            ? selectedLeague
+                            : selectedSport !== 'all'
+                            ? t(language, selectedSport)
+                            : t(language, activeNavTab === 'live' ? 'live' : 'sports')}
+                        </span>
+                        <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono font-bold">
+                          {filteredMatches.length}
+                        </span>
+                      </h2>
+                    </div>
+
+                    {/* Reset filter shortcut if filtered */}
+                    {(selectedSport !== 'all' || selectedLeague) && (
+                      <button
+                        onClick={() => {
+                          setSelectedSport('all');
+                          setSelectedLeague(null);
+                          sounds.playClick();
+                        }}
+                        className="text-xs text-amber-400 hover:text-amber-300 font-semibold cursor-pointer"
+                      >
+                        {language === 'am' ? 'ሁሉንም አሳይ' : 'Clear Filters'}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Matches List */}
+                  <div className="space-y-3">
+                    {filteredMatches.length === 0 ? (
+                      <div className="bg-slate-900/60 rounded-2xl border border-slate-800 p-8 text-center text-slate-400">
+                        <p className="text-sm font-semibold">No matches found for your filter.</p>
+                        <button
+                          onClick={() => {
+                            setSelectedSport('all');
+                            setSelectedLeague(null);
+                            setSearchQuery('');
+                          }}
+                          className="mt-3 px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-lg text-xs font-bold"
+                        >
+                          Reset All Filters
+                        </button>
+                      </div>
+                    ) : (
+                      filteredMatches.map((match) => (
+                        <MatchCard
+                          key={match.id}
+                          match={match}
+                          language={language}
+                          selectedOddIds={selections.map((s) => s.matchId)}
+                          onSelectOdd={handleSelectOdd}
+                          onOpenDetails={(m) => setSelectedMatchForDetail(m)}
+                        />
+                      ))
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Right Sidebar: Bet Slip */}
+            <BetSlip
+              selections={selections}
+              onRemoveSelection={handleRemoveSelection}
+              onClearSlip={handleClearSlip}
+              balance={balance}
+              currency={currency}
+              language={language}
+              onPlaceBet={handlePlaceBet}
+              activeBets={activeBets}
+              onCashOut={handleCashOut}
+              isOpenMobile={mobileSlipOpen}
+              onCloseMobile={() => setMobileSlipOpen(false)}
+              onLoadBookingCode={handleLoadBookingCode}
+            />
+          </div>
+        )}
       </main>
 
       {/* Match Deep Markets Modal */}
@@ -560,6 +747,17 @@ export default function App() {
         language={language}
         currency={currency}
         allBets={activeBets}
+      />
+
+      {/* User Login & Signup Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        language={language}
+        onAuthSuccess={(user) => {
+          setCurrentUser(user);
+          updateBalanceState(user.balance);
+        }}
       />
 
       {/* Footer */}

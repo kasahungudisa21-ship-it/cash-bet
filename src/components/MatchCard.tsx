@@ -39,24 +39,46 @@ export const MatchCard: React.FC<MatchCardProps> = ({
   ) => {
     const isSelected = selectedOddIds.includes(oddId);
 
+    // Ethiopian Birr Banknote Theme Assignment
+    // Home (1) = 100 Birr (Emerald/Teal)
+    // Draw (X) = 50 Birr (Golden Amber)
+    // Away (2) = 200 Birr (Royal Violet)
+    const isHome = label.includes('1') || oddId.toLowerCase().includes('home');
+    const isDraw = label.includes('X') || oddId.toLowerCase().includes('draw');
+    const isAway = label.includes('2') || oddId.toLowerCase().includes('away');
+
+    let selectedStyle = 'bg-emerald-500 text-slate-950 border-emerald-400 font-black shadow-md';
+    let unselectedBorder = 'hover:border-emerald-500/50';
+
+    if (isHome) {
+      selectedStyle = 'bg-gradient-to-r from-teal-500 to-emerald-400 text-slate-950 border-teal-300 font-black shadow-md shadow-teal-950/50';
+      unselectedBorder = 'hover:border-teal-400/60 hover:text-teal-200';
+    } else if (isDraw) {
+      selectedStyle = 'bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 border-amber-300 font-black shadow-md shadow-amber-950/50';
+      unselectedBorder = 'hover:border-amber-400/60 hover:text-amber-200';
+    } else if (isAway) {
+      selectedStyle = 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white border-purple-300 font-black shadow-md shadow-purple-950/50';
+      unselectedBorder = 'hover:border-purple-400/60 hover:text-purple-200';
+    }
+
     return (
       <button
         onClick={() => {
           onSelectOdd(match, oddId, label, value, marketName);
           sounds.playClick();
         }}
-        className={`relative flex items-center justify-between px-2.5 py-2 rounded-lg border text-xs font-mono transition-all duration-150 cursor-pointer ${
+        className={`relative flex items-center justify-between px-2.5 py-2 rounded-xl border text-xs font-mono transition-all duration-150 cursor-pointer ${
           isSelected
-            ? 'bg-emerald-500 text-slate-950 border-emerald-400 font-extrabold shadow-sm shadow-emerald-500/30'
-            : 'bg-slate-900/90 border-slate-800 text-slate-300 hover:border-emerald-500/40 hover:bg-slate-800/80 hover:text-white'
+            ? selectedStyle
+            : `bg-slate-900/90 border-slate-800 text-slate-300 ${unselectedBorder} hover:bg-slate-800/80`
         }`}
       >
-        <span className={`text-[10px] font-sans font-semibold ${isSelected ? 'text-slate-900' : 'text-slate-400'}`}>
+        <span className={`text-[10px] font-sans font-bold ${isSelected ? (isAway ? 'text-purple-100' : 'text-slate-900') : 'text-slate-400'}`}>
           {label}
         </span>
 
         <div className="flex items-center gap-1 font-bold">
-          <span className={isSelected ? 'text-slate-950' : 'text-emerald-400'}>
+          <span className={isSelected ? (isAway ? 'text-white font-black' : 'text-slate-950 font-black') : 'text-amber-300 font-bold'}>
             {value.toFixed(2)}
           </span>
           {trend === 'up' && (
@@ -71,11 +93,16 @@ export const MatchCard: React.FC<MatchCardProps> = ({
   };
 
   return (
-    <div className={`rounded-xl border transition-all ${
+    <div className={`rounded-xl border transition-all overflow-hidden ${
       match.isEthiopianLeague 
-        ? 'bg-slate-900/80 border-emerald-500/30 hover:border-emerald-500/60 shadow-lg shadow-emerald-950/20' 
-        : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+        ? 'bg-slate-900/90 border-emerald-500/40 hover:border-amber-400/60 shadow-lg shadow-emerald-950/30' 
+        : 'bg-slate-900/70 border-slate-800 hover:border-slate-700'
     }`}>
+      {/* Ethiopian Tricolor Line on Ethiopian Matches */}
+      {match.isEthiopianLeague && (
+        <div className="ethiopia-tricolor-line h-1 w-full" />
+      )}
+
       {/* Top Meta Header */}
       <div className="px-3.5 py-2 border-b border-slate-800/80 flex items-center justify-between text-xs text-slate-400 font-mono">
         <div className="flex items-center gap-2 truncate">

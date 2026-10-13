@@ -192,27 +192,64 @@ export const SportsSidebar: React.FC<SportsSidebarProps> = ({
         </div>
       </div>
 
-      {/* Telebirr Fast Deposit Callout */}
-      <div className="rounded-xl bg-slate-900/90 border border-slate-800 p-3.5 space-y-2.5">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-sky-500/20 text-sky-400 border border-sky-500/30 flex items-center justify-center font-bold text-xs">
+      {/* Ethiopian Premier League Mini Standings */}
+      <div className="bg-slate-900/90 rounded-xl border border-slate-800 p-3 overflow-hidden">
+        <div className="flex items-center justify-between text-xs font-bold text-slate-300 mb-2 font-mono pb-1.5 border-b border-slate-800">
+          <div className="flex items-center gap-1.5">
+            <span>🇪🇹</span>
+            <span className="text-white font-sans">{language === 'am' ? 'የፕሪሚየር ሊግ ሰንጠረዥ' : 'Ethio Premier Table'}</span>
+          </div>
+          <span className="text-[10px] text-amber-400 font-bold">2026</span>
+        </div>
+
+        <div className="space-y-1.5 text-[11px] font-mono">
+          {[
+            { rank: 1, team: 'ቅዱስ ጊዮርጊስ (St. George)', p: 18, pts: 42, form: 'W-W-D' },
+            { rank: 2, team: 'ኢትዮጵያ ቡና (Ethio Coffee)', p: 18, pts: 39, form: 'W-W-W' },
+            { rank: 3, team: 'ፋሲል ከነማ (Fasil Kenema)', p: 18, pts: 37, form: 'D-W-W' },
+            { rank: 4, team: 'ባህር ዳር ከተማ (Bahir Dar)', p: 18, pts: 35, form: 'W-L-W' },
+          ].map((item) => (
+            <div key={item.rank} className="flex items-center justify-between py-0.5 text-slate-300">
+              <div className="flex items-center gap-1.5 truncate">
+                <span className={`w-4 h-4 rounded-full text-[9px] flex items-center justify-center font-bold ${
+                  item.rank === 1 ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 text-slate-400'
+                }`}>
+                  {item.rank}
+                </span>
+                <span className="truncate max-w-[140px] text-[10px] text-white font-sans font-medium">
+                  {item.team}
+                </span>
+              </div>
+              <span className="font-bold text-emerald-400 font-mono text-[10px]">{item.pts} pts</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Telebirr & CBE Birr Fast Deposit Callout with Ethiopian Tricolor */}
+      <div className="rounded-xl bg-slate-900/90 border border-slate-800 p-3.5 space-y-2.5 relative overflow-hidden">
+        {/* Tricolor accent bar */}
+        <div className="ethiopia-tricolor-line h-1 absolute top-0 left-0 right-0" />
+
+        <div className="flex items-center gap-2 pt-1">
+          <div className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 border border-sky-500/30 flex items-center justify-center font-bold text-sm">
             📱
           </div>
           <div>
             <div className="text-xs font-bold text-white flex items-center gap-1.5">
               <span>{language === 'am' ? 'በቴሌብር / ሲቢኢ ብር' : 'Telebirr & CBE Birr'}</span>
-              <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-1 py-0.2 rounded font-mono font-bold">LIVE</span>
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-1 py-0.2 rounded font-mono font-bold">24/7</span>
             </div>
-            <div className="text-[11px] text-amber-400 font-mono font-bold">
-              0941574759
+            <div className="text-[11px] text-amber-300 font-mono font-bold">
+              {language === 'am' ? 'የተረጋገጠ ራስ-ሰር ክፍያ' : 'Auto-Credit Gateway'}
             </div>
           </div>
         </div>
 
         <p className="text-[10px] text-slate-400">
           {language === 'am' 
-            ? 'ተቀማጭ ለማድረግ በቴሌብር ወይም በሲቢኢ ብር ወደ 0941574759 ያስገቡ።' 
-            : 'Transfer deposits directly to Cash Bet: 0941574759'}
+            ? 'በቴሌብር ወይም በሲቢኢ ብር ተቀማጭ ያድርጉ፤ ሂሳብዎ ወዲያውኑ ገቢ ይደረጋል።' 
+            : 'Transfer deposits directly via Telebirr or CBE Birr with instant automated credit.'}
         </p>
 
         <button
@@ -220,10 +257,10 @@ export const SportsSidebar: React.FC<SportsSidebarProps> = ({
             openWallet('deposit');
             sounds.playClick();
           }}
-          className="w-full py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold text-xs rounded-lg transition-transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow"
+          className="w-full py-2 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-xs rounded-lg transition-transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow"
         >
           <Zap className="w-3.5 h-3.5 fill-slate-950" />
-          <span>{language === 'am' ? 'ብር አስገባ (0941574759)' : 'Deposit via 0941574759'}</span>
+          <span>{language === 'am' ? 'ብር አስገባ (Deposit)' : 'Deposit Now'}</span>
         </button>
       </div>
 

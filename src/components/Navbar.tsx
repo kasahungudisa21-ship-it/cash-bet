@@ -11,7 +11,9 @@ import {
   ArrowUpRight, 
   Menu, 
   X,
-  Coins
+  Coins,
+  User,
+  LogOut
 } from 'lucide-react';
 import { Currency, Language } from '../types/betting';
 import { t } from '../utils/translations';
@@ -33,6 +35,9 @@ interface NavbarProps {
   setActiveNavTab: (tab: string) => void;
   openSlipMobile: () => void;
   slipCount: number;
+  currentUser?: { username: string; phone: string; vipLevel: string } | null;
+  openAuthModal: () => void;
+  onSignOut: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -51,6 +56,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   setActiveNavTab,
   openSlipMobile,
   slipCount,
+  currentUser,
+  openAuthModal,
+  onSignOut,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -71,18 +79,25 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="sticky top-0 z-40 bg-slate-950/95 backdrop-blur-md border-b border-slate-800/80 select-none">
-      {/* Top Banner / Ticker */}
-      <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-amber-950/60 border-b border-emerald-900/40 text-[11px] py-1 px-4 flex items-center justify-between text-slate-300">
+      {/* Ethiopian Flag Tricolor Signature Top Border */}
+      <div className="ethiopia-tricolor-line h-1.5 w-full shadow-sm" />
+
+      {/* Top Banner / Ticker with Ethiopian Colors */}
+      <div className="bg-gradient-to-r from-emerald-950 via-slate-950 to-rose-950/70 border-b border-slate-800/80 text-[11px] py-1 px-4 flex items-center justify-between text-slate-300">
         <div className="flex items-center gap-2 overflow-hidden truncate">
-          <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <div className="flex items-center gap-0.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+            <span className="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>
+            <span className="w-2 h-2 rounded-full bg-rose-500 inline-block"></span>
+          </div>
           <span className="font-semibold text-emerald-400">
-            {language === 'am' ? 'የቴሌብር / ሲቢኢ ብር ተቀማጭ ቁጥር' : 'Deposit via Telebirr / CBE'}:
+            {language === 'am' ? 'የቴሌብር / ሲቢኢ ብር ፈጣን ተቀማጭ' : 'Telebirr & CBE Birr Instant Deposit'}
           </span>
-          <span className="font-mono font-bold text-amber-400 tracking-wider">
-            0941574759
+          <span className="text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.2 rounded font-mono font-bold">
+            {language === 'am' ? 'ኦፊሴላዊ ጌትዌይ' : 'OFFICIAL GATEWAY'}
           </span>
           <span className="text-slate-400 hidden md:inline">
-            ({language === 'am' ? 'ገንዘብ ሲያስገቡ ወደዚህ ቁጥር ይላኩ' : 'Transfer directly to this number'})
+            ({language === 'am' ? 'በቴሌብር ወይም በሲቢኢ ብር በደቂቃዎች ውስጥ በቀጥታ ገቢ ይደረጋል' : 'Direct secure transfer with instant automated credit'})
           </span>
         </div>
         
@@ -103,7 +118,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Main Bar */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-3">
-        {/* Brand / Logo */}
+        {/* Brand / Logo with Ethiopian Tricolor */}
         <div className="flex items-center gap-4">
           <button
             onClick={() => {
@@ -112,22 +127,22 @@ export const Navbar: React.FC<NavbarProps> = ({
             }}
             className="flex items-center gap-2.5 text-left group cursor-pointer"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-amber-500 p-0.5 shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 via-amber-400 to-rose-500 p-0.5 shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform">
               <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
                 <Coins className="w-5 h-5 text-amber-400 group-hover:rotate-12 transition-transform" />
               </div>
             </div>
             <div>
               <div className="flex items-center gap-1.5 leading-none">
-                <span className="text-xl font-black tracking-wider text-white">
-                  CASH<span className="text-emerald-400">BET</span>
+                <span className="text-xl font-black tracking-wider text-emerald-400">
+                  CASH<span className="text-amber-400">BET</span>
                 </span>
-                <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold px-1.5 py-0.2 rounded">
-                  ET
+                <span className="text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 font-bold px-1.5 py-0.2 rounded font-mono">
+                  🇪🇹 ET
                 </span>
               </div>
-              <span className="text-[11px] text-amber-400/90 font-medium tracking-tight block mt-0.5">
-                {language === 'am' ? 'ካሽ ቤት ኢትዮጵያ' : 'Ethiopia Premier'}
+              <span className="text-[11px] font-bold tracking-tight block mt-0.5 text-amber-300">
+                {language === 'am' ? 'ካሽ ቤት ኢትዮጵያ' : 'Ethiopia Sportsbook'}
               </span>
             </div>
           </button>
@@ -251,6 +266,44 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Globe className="w-3.5 h-3.5" />
             <span>{language === 'en' ? 'አማ' : 'EN'}</span>
           </button>
+
+          {/* User Account / Profile */}
+          {currentUser ? (
+            <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg p-1 pr-2">
+              <button
+                onClick={openAuthModal}
+                className="flex items-center gap-1.5 text-xs text-slate-200 hover:text-white cursor-pointer px-1.5 py-0.5"
+                title="Profile"
+              >
+                <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center text-[10px]">
+                  {currentUser.username[0]?.toUpperCase() || 'U'}
+                </div>
+                <div className="text-left hidden sm:block">
+                  <div className="text-[11px] font-bold text-white truncate max-w-[80px]">
+                    {currentUser.username}
+                  </div>
+                  <div className="text-[9px] text-amber-400 leading-none">
+                    {currentUser.vipLevel}
+                  </div>
+                </div>
+              </button>
+              <button
+                onClick={onSignOut}
+                className="p-1 text-slate-500 hover:text-rose-400 cursor-pointer"
+                title="Sign Out"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={openAuthModal}
+              className="px-2.5 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs rounded-lg transition-transform active:scale-95 flex items-center gap-1 cursor-pointer shadow"
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>{language === 'am' ? 'ግባ / ተመዝገብ' : 'Login'}</span>
+            </button>
+          )}
 
           {/* Sound Mute/Unmute */}
           <button

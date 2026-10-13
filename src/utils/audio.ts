@@ -89,6 +89,10 @@ class SoundEffects {
     } catch {}
   }
 
+  playCashout() {
+    this.playWin();
+  }
+
   // Crash rocket explosion / crash sound
   playCrash() {
     if (!this.enabled) return;
